@@ -1,3 +1,4 @@
+import uuid
 import pandas as pd
 
 
@@ -20,7 +21,7 @@ def getDayDate(sourceFrame, sourceColumn, dateFormat):
 
 
 # splits frame based on unique vals in columns
-def addIds(sourceFrame, sourceColumn, idColumnName):
+def addGuidsUnique(sourceFrame, sourceColumn, idColumnName):
     originalFrame = sourceFrame.copy()
 
     uniqueValues = originalFrame[sourceColumn].unique()
@@ -36,18 +37,25 @@ def addIds(sourceFrame, sourceColumn, idColumnName):
 
     return originalFrame
 
+# adds UUID to every row in a new column
+def addGuids(sourceFrame, idColumnName):
+    originalFrame = sourceFrame.copy()
 
-def splitFrames(sourceFrame, splitColumn, idColumnName, childColumns):
+    uuid_list = [str(uuid.uuid4()) for _ in range(len(originalFrame))]
+    originalFrame[idColumnName] = uuid_list
+
+    return originalFrame
+
+def splitFrames(sourceFrame, idColumnName, childColumns):
     originalFrame = sourceFrame.copy()
 
     selectedSplitColumns = childColumns.copy()
-    selectedSplitColumns.extend([idColumnName, splitColumn])
+    selectedSplitColumns.extend([idColumnName])
 
     splitFrame = originalFrame[selectedSplitColumns]
-    splitFrame = splitFrame.drop_duplicates(subset=[splitColumn])
+    splitFrame = splitFrame.drop_duplicates(subset=[idColumnName])
 
     removeColumns = childColumns.copy()
-    removeColumns.extend([splitColumn])
 
     originalColumns = sourceFrame.columns.tolist()
     newOriginalColumns = [column for column in originalColumns if column not in removeColumns]
