@@ -49,8 +49,8 @@ def addGuids(sourceFrame, idColumnName):
 def splitFrames(sourceFrame, idColumnName, childColumns):
     originalFrame = sourceFrame.copy()
 
-    selectedSplitColumns = childColumns.copy()
-    selectedSplitColumns.extend([idColumnName])
+    selectedSplitColumns = [idColumnName]
+    selectedSplitColumns.extend(childColumns)
 
     splitFrame = originalFrame[selectedSplitColumns]
     splitFrame = splitFrame.drop_duplicates(subset=[idColumnName])
