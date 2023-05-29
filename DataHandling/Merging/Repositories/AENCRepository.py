@@ -15,7 +15,7 @@ class Repository:
 
         productData = pd.read_sql(productJoinQuery, self.dbConnection)
 
-        newColumnNames = ['PRODUCT_id', 'PRODUCT_name', 'PRODUCT_sub_category', 'PRODUCT_category', 'PRODUCT_color',
+        newColumnNames = ['PRODUCT_id', 'PRODUCT_name', 'PRODUCT_sub_category', 'PRODUCT_category', 'PRODUCT_colour',
                           'PRODUCT_storage_quantity']
         productData.columns = newColumnNames
 
