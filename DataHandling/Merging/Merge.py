@@ -1,20 +1,32 @@
 from DataService import BrightSpaceData as data
+from Repositories.AENCRepository import Repository as aencRepository
+from Repositories.NorthwindRepository import Repository as northwindRepository
+from Repositories.AdventureWorksRepository import Repository as adventureWorksRepository
+from Repositories.SalesRepository import Repository as salesRepository
 import pandas as pd
 
-datasets = data()
+server = 'outdoorfusionserver.database.windows.net'
+username = 'floep'
+password = 'ploep123!'
+driver = '{ODBC Driver 17 for SQL Server}'
+dataService = data(server, username, password, driver)
 
-aencStar = datasets.getAENCData()
-northwindStar = datasets.getNorthwindData()
+northwind = 'Northwind'
+AENC = 'AENC'
+adventureWorks = 'AdventureWorks'
+sales = 'Sales_db'
+
+northwindStar = dataService.getData(northwindRepository, northwind)
+aencStar = dataService.getData(aencRepository, AENC)
+adventureWorksStar = dataService.getData(adventureWorksRepository, adventureWorks)
+salesStar = dataService.getData(salesRepository, sales)
 
 
-def mergeFrame(frameOne, frameTwo):
-    resultFrame = frameOne.copy()
+def mergeFrame(starFrame, frameTwo):
+    resultFrame = starFrame.copy()
 
     for table in frameTwo:
-        print(f'TABLE: {table}')
-        for column in frameTwo[table]:
-            print(f'COLUMN: {column}')
-            resultFrame = pd.concat([frameTwo[table][column],frameTwo[table][column]])
+        resultFrame[table] = pd.concat([resultFrame[table], frameTwo[table]])
 
     return resultFrame
 

@@ -1,12 +1,15 @@
 import pandas as pd
 from Tools import utils
-import pyodbc
+from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 
 
 class Repository:
     def __init__(self, connectionString):
-        dbConnection = pyodbc.connect(connectionString)
-        self.salesDataFrame = pd.read_sql("SELECT * FROM Sales", dbConnection)
+        connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connectionString})
+        engine = create_engine(connection_url)
+
+        self.salesDataFrame = pd.read_sql("SELECT * FROM Sales", engine)
 
     def getProductDataFrame(self):
         sales = utils.addGuidsUnique(self.salesDataFrame, 'Product', 'prod_id')
@@ -32,6 +35,9 @@ class Repository:
         customerData.columns = newColumnNames
 
         return customerData
+
+    def getEmployeeDataFrame(self):
+        return pd.DataFrame()
 
     def getDayDataFrame(self):
         newFrames = utils.splitFrames(self.salesDataFrame, 'Date', [])

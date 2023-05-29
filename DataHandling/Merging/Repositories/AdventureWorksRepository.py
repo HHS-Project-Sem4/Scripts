@@ -1,11 +1,13 @@
 import pandas as pd
 from Tools import utils
-import pyodbc
-
+from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 
 class Repository:
     def __init__(self, connectionString):
-        self.dbConnection = pyodbc.connect(connectionString)
+        connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connectionString})
+        self.engine = create_engine(connection_url)
+
 
     def getProductDataFrame(self):
         productJoinQuery = """
@@ -16,7 +18,7 @@ class Repository:
         JOIN Production.ProductInventory pi ON p.ProductID = pi.ProductID
         """
 
-        productData = pd.read_sql(productJoinQuery, self.dbConnection)
+        productData = pd.read_sql(productJoinQuery, self.engine)
 
         renameColumns = ['PRODUCT_id', 'PRODUCT_name', 'PRODUCT_category', 'PRODUCT_sub_category', 'PRODUCT_colour',
                          'PRODUCT_prod_cost', 'PRODUCT_storage_quantity']
@@ -36,7 +38,7 @@ class Repository:
         JOIN person.CountryRegion cr ON sp.CountryRegionCode = cr.CountryRegionCode
         """
 
-        customerData = pd.read_sql(customerJoinQuery, self.dbConnection)
+        customerData = pd.read_sql(customerJoinQuery, self.engine)
 
         renameColumns = ['CUSTOMER_id', 'CUSTOMER_address', 'CUSTOMER_city', 'CUSTOMER_state', 'CUSTOMER_country',
                          'CUSTOMER_company_name']
@@ -56,7 +58,7 @@ class Repository:
         JOIN person.CountryRegion cr ON psp.CountryRegionCode = cr.CountryRegionCode
         """
 
-        employeeData = pd.read_sql(employeeJoinQuery, self.dbConnection)
+        employeeData = pd.read_sql(employeeJoinQuery, self.engine)
 
         # Rename columns
         employeeData.rename(columns={'BusinessEntityID': 'EMPLOYEE_id',
@@ -70,7 +72,7 @@ class Repository:
         return employeeData
 
     def getDayDataFrame(self):
-        orderDates = pd.read_sql("SELECT DISTINCT OrderDate FROM sales.SalesOrderHeader", self.dbConnection)
+        orderDates = pd.read_sql("SELECT DISTINCT OrderDate FROM sales.SalesOrderHeader", self.engine)
 
         dateFormat = '%Y-%m-%d'
         DAY_date = utils.getDayDate(orderDates, 'OrderDate', dateFormat)
@@ -84,7 +86,7 @@ class Repository:
         JOIN sales.SalesOrderHeader sh ON sd.SalesOrderID = sh.SalesOrderID
         """
 
-        orderDetailsData = pd.read_sql(orderDetailsQuery, self.dbConnection)
+        orderDetailsData = pd.read_sql(orderDetailsQuery, self.engine)
 
         renameColumns = ['ORDER_DETAIL_id', 'ORDER_HEADER_id', 'ORDER_DETAIL_order_quantity', 'ORDER_DETAIL_unit_price',
                          'DAY_date',
