@@ -62,3 +62,11 @@ def splitFrames(sourceFrame, idColumnName, childColumns):
     originalFrame = originalFrame[newOriginalColumns]
 
     return [originalFrame, splitFrame]
+
+def mergeFrame(starFrame, frameTwo):
+    resultFrame = starFrame.copy()
+
+    for table in frameTwo:
+        resultFrame[table] = pd.concat([resultFrame[table], frameTwo[table]])
+
+    return resultFrame

@@ -1,9 +1,10 @@
-from DataService import BrightSpaceData as data
+from Services.DataService import BrightSpaceData as data
 from Repositories.AENCRepository import Repository as aencRepository
 from Repositories.NorthwindRepository import Repository as northwindRepository
 from Repositories.AdventureWorksRepository import Repository as adventureWorksRepository
 from Repositories.SalesRepository import Repository as salesRepository
 import pandas as pd
+import Tools.utils as utils
 
 server = 'outdoorfusionserver.database.windows.net'
 username = 'floep'
@@ -31,4 +32,4 @@ def mergeFrame(starFrame, frameTwo):
     return resultFrame
 
 
-mergeFrame(aencStar, northwindStar)
+utils.mergeFrame(aencStar, northwindStar)
