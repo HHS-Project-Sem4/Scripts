@@ -9,29 +9,28 @@ class Repository:
 
     def getProductDataFrame(self):
         productJoinQuery = """
-        SELECT p.ProductID, p.Name, pc.Name AS CategoryName, psc.Name AS SubCategoryName, p.Color, p.StandardCost
+        SELECT p.ProductID, p.Name, pc.Name AS CategoryName, psc.Name AS SubCategoryName, p.Color, p.StandardCost, pi.Quantity
         FROM production.Product p
         JOIN production.ProductSubcategory psc ON p.ProductSubcategoryID = psc.ProductSubcategoryID
         JOIN production.ProductCategory pc ON psc.ProductCategoryID = pc.ProductCategoryID
+        JOIN Production.ProductInventory pi ON p.ProductID = pi.ProductID
         """
 
         productData = pd.read_sql(productJoinQuery, self.dbConnection)
 
         renameColumns = ['PRODUCT_id', 'PRODUCT_name', 'PRODUCT_category', 'PRODUCT_sub_category', 'PRODUCT_colour',
-                         'PRODUCT_prod_cost']
+                         'PRODUCT_prod_cost', 'PRODUCT_storage_quantity']
         productData.columns = renameColumns
 
         return productData
-
 
     def getCustomerDataFrame(self):
         customerJoinQuery = """
         SELECT c.CustomerID, a.AddressLine1, a.City, sp.Name AS StateName, cr.Name AS CountryName, s.Name AS CompanyName
         FROM sales.Customer c
-        JOIN sales.Store s ON c.StoreID = s.BusinessEntityID
         JOIN person.Person p ON c.PersonID = p.BusinessEntityID
-        JOIN person.BusinessEntity be ON p.BusinessEntityID = be.BusinessEntityID AND s.BusinessEntityID = be.BusinessEntityID
-        JOIN person.BusinessEntityAddress bea ON be.BusinessEntityID = bea.BusinessEntityID
+        LEFT JOIN sales.Store s  ON c.StoreID = s.BusinessEntityID
+        JOIN person.BusinessEntityAddress bea ON c.StoreID = bea.BusinessEntityID OR c.PersonID = bea.BusinessEntityID
         JOIN person.Address a ON bea.AddressID = a.AddressID
         JOIN person.StateProvince sp ON a.StateProvinceID = sp.StateProvinceID
         JOIN person.CountryRegion cr ON sp.CountryRegionCode = cr.CountryRegionCode
@@ -44,7 +43,6 @@ class Repository:
         customerData.columns = renameColumns
 
         return customerData
-
 
     def getEmployeeDataFrame(self):
         employeeJoinQuery = """
@@ -71,7 +69,6 @@ class Repository:
 
         return employeeData
 
-
     def getDayDataFrame(self):
         orderDates = pd.read_sql("SELECT DISTINCT OrderDate FROM sales.SalesOrderHeader", self.dbConnection)
 
@@ -80,17 +77,17 @@ class Repository:
 
         return DAY_date
 
-
     def getOrderDetailsDataFrame(self):
         orderDetailsQuery = """
-        SELECT SalesOrderDetailID,OrderQty, UnitPrice, OrderDate,SalesPersonID, CustomerID ,ProductID
+        SELECT SalesOrderDetailID, sd.SalesOrderID,OrderQty, UnitPrice, OrderDate,SalesPersonID, CustomerID ,ProductID
         FROM sales.SalesOrderDetail sd
         JOIN sales.SalesOrderHeader sh ON sd.SalesOrderID = sh.SalesOrderID
         """
 
         orderDetailsData = pd.read_sql(orderDetailsQuery, self.dbConnection)
 
-        renameColumns = ['ORDER_DETAIL_NUMBER', 'ORDER_DETAIL_order_quantity', 'ORDER_DETAIL_unit_price', 'DAY_date',
+        renameColumns = ['ORDER_DETAIL_id', 'ORDER_HEADER_id', 'ORDER_DETAIL_order_quantity', 'ORDER_DETAIL_unit_price',
+                         'DAY_date',
                          'EMPLOYEE_id', 'CUSTOMER_id', 'PRODUCT_id']
         orderDetailsData.columns = renameColumns
 

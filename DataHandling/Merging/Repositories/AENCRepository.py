@@ -8,7 +8,6 @@ class Repository:
         self.dbConnection = pyodbc.connect(connectionString)
 
     def getProductDataFrame(self):
-
         productJoinQuery = """
         SELECT id, description, name, category, color, quantity
         FROM product
@@ -21,7 +20,6 @@ class Repository:
         productData.columns = newColumnNames
 
         return productData
-
 
     def getCustomerDataFrame(self):
         customerJoinQuery = """
@@ -38,7 +36,6 @@ class Repository:
 
         return customerData
 
-
     def getEmployeeDataFrame(self):
         employeeJoinQuery = """
         SELECT emp_id, emp_fname, emp_lname, city
@@ -52,7 +49,6 @@ class Repository:
 
         return employeeData
 
-
     def getDayDataFrame(self):
         orderDates = pd.read_sql("SELECT DISTINCT order_date FROM sales_order", self.dbConnection)
 
@@ -61,10 +57,9 @@ class Repository:
 
         return DAY_date
 
-
     def getOrderDetailsDataFrame(self):
         orderDetailsQuery = """
-        SELECT soi.id, so.cust_id, so.order_date, so.sales_rep, soi.prod_id, p.unit_price, soi.quantity
+        SELECT soi.id, soi.line_id , so.cust_id, so.order_date, so.sales_rep, soi.prod_id, p.unit_price, soi.quantity
         FROM sales_order_item soi
         JOIN sales_order so ON soi.id = so.id
         JOIN product p ON soi.prod_id = p.id
@@ -72,7 +67,8 @@ class Repository:
 
         orderDetailsData = pd.read_sql(orderDetailsQuery, self.dbConnection)
 
-        renameColumns = ['ORDER_DETAIL_NUMBER', 'CUSTOMER_id', 'DAY_date', 'EMPLOYEE_id', 'PRODUCT_id', 'ORDER_DETAIL_unit_price', 'ORDER_DETAIL_order_quantity']
+        renameColumns = ['ORDER_DETAIL_id', 'ORDER_HEADER_id', 'CUSTOMER_id', 'DAY_date', 'EMPLOYEE_id', 'PRODUCT_id',
+                         'ORDER_DETAIL_unit_price', 'ORDER_DETAIL_order_quantity']
         orderDetailsData.columns = renameColumns
 
         return orderDetailsData

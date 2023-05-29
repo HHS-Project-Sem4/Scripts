@@ -16,11 +16,10 @@ class Repository:
         self.salesDataFrame = newFrames[0]
         productData = newFrames[1]
 
-        newColumnNames = ['PRODUCT_id', 'PRODUCT_name' ,'PRODUCT_category', 'PRODUCT_sub_category','PRODUCT_prod_cost']
+        newColumnNames = ['PRODUCT_id', 'PRODUCT_name', 'PRODUCT_category', 'PRODUCT_sub_category', 'PRODUCT_prod_cost']
         productData.columns = newColumnNames
 
         return productData
-
 
     def getCustomerDataFrame(self):
         self.salesDataFrame = utils.addGuids(self.salesDataFrame, 'CUSTOMER_id')
@@ -29,11 +28,10 @@ class Repository:
         self.salesDataFrame = newFrames[0]
         customerData = newFrames[1]
 
-        newColumnNames = ['CUSTOMER_id','CUSTOMER_country', 'CUSTOMER_state']
+        newColumnNames = ['CUSTOMER_id', 'CUSTOMER_country', 'CUSTOMER_state']
         customerData.columns = newColumnNames
 
         return customerData
-
 
     def getDayDataFrame(self):
         newFrames = utils.splitFrames(self.salesDataFrame, 'Date', [])
@@ -46,12 +44,13 @@ class Repository:
 
         return DAY_date
 
-
+    # Sales doesn't have a header ID or for Detail
     def getOrderDetailsDataFrame(self):
         selectedColumn = ['Order_Quantity', 'Unit_Price', 'Date', 'CUSTOMER_id', 'prod_id']
         orderDetailsData = self.salesDataFrame[selectedColumn]
 
-        renameColumns = ['ORDER_DETAIL_order_quantity', 'ORDER_DETAIL_unit_price', 'DAY_date', 'CUSTOMER_id' ,'PRODUCT_id']
+        renameColumns = ['ORDER_DETAIL_order_quantity', 'ORDER_DETAIL_unit_price', 'DAY_date', 'CUSTOMER_id',
+                         'PRODUCT_id']
         orderDetailsData.columns = renameColumns
 
         return orderDetailsData
