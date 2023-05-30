@@ -11,11 +11,12 @@ class Repository:
 
     def getProductDataFrame(self):
         productJoinQuery = """
-        SELECT p.ProductID, p.Name, pc.Name AS CategoryName, psc.Name AS SubCategoryName, p.Color, p.StandardCost, pi.Quantity
+        SELECT p.ProductID, p.Name, pc.Name AS CategoryName, psc.Name AS SubCategoryName, p.Color, p.StandardCost, SUM(pi.Quantity) AS Quantity
         FROM production.Product p
-        JOIN production.ProductSubcategory psc ON p.ProductSubcategoryID = psc.ProductSubcategoryID
-        JOIN production.ProductCategory pc ON psc.ProductCategoryID = pc.ProductCategoryID
+        FULL OUTER JOIN production.ProductSubcategory psc ON p.ProductSubcategoryID = psc.ProductSubcategoryID
+        FULL OUTER JOIN production.ProductCategory pc ON psc.ProductCategoryID = pc.ProductCategoryID
         JOIN Production.ProductInventory pi ON p.ProductID = pi.ProductID
+        GROUP BY p.ProductID, p.Name, pc.Name, psc.Name, p.Color, p.StandardCost
         """
 
         productData = pd.read_sql(productJoinQuery, self.engine)
@@ -27,8 +28,10 @@ class Repository:
         return productData
 
     def getCustomerDataFrame(self):
+        # Distinct because of the one to many from customer -> address, only other easy way is to just exclude anything related to address
+
         customerJoinQuery = """
-        SELECT c.CustomerID, a.AddressLine1, a.City, sp.Name AS StateName, cr.Name AS CountryName, s.Name AS CompanyName
+        SELECT DISTINCT c.CustomerID, a.AddressLine1, a.City, sp.Name AS StateName, cr.Name AS CountryName, s.Name AS CompanyName
         FROM sales.Customer c
         JOIN person.Person p ON c.PersonID = p.BusinessEntityID
         LEFT JOIN sales.Store s  ON c.StoreID = s.BusinessEntityID
@@ -43,6 +46,9 @@ class Repository:
         renameColumns = ['CUSTOMER_id', 'CUSTOMER_address', 'CUSTOMER_city', 'CUSTOMER_state', 'CUSTOMER_country',
                          'CUSTOMER_company_name']
         customerData.columns = renameColumns
+
+        # dropping duplicates on this column because of the one to many relationship with businessentity and businessEntityAddress, only other way is to just exclude the address etc data
+        customerData.drop_duplicates(subset=['CUSTOMER_id'])
 
         return customerData
 
@@ -61,13 +67,9 @@ class Repository:
         employeeData = pd.read_sql(employeeJoinQuery, self.engine)
 
         # Rename columns
-        employeeData.rename(columns={'BusinessEntityID': 'EMPLOYEE_id',
-                                     'FirstName': 'EMPLOYEE_first_name',
-                                     'LastName': 'EMPLOYEE_last_name',
-                                     'City': 'EMPLOYEE_city',
-                                     'StateName': 'EMPLOYEE_state',
-                                     'CountryName': 'EMPLOYEE_country'},
-                            inplace=True)
+        renameColumns = ['EMPLOYEE_id', 'EMPLOYEE_first_name', 'EMPLOYEE_last_name', 'EMPLOYEE_city', 'EMPLOYEE_state',
+                         'EMPLOYEE_country']
+        employeeData.columns = renameColumns
 
         return employeeData
 

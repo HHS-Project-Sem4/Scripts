@@ -1,13 +1,14 @@
 class BrightSpaceData:
 
-    def __init__(self, server, username, password, driver):
+    def __init__(self, server, username, password, driver, trustedConnection):
         self.server = server
         self.username = username
         self.password = password
         self.driver = driver
+        self.trustedConnection = trustedConnection
 
     def getData(self, repository, dbName):
-        connectionString = f"DRIVER={self.driver};SERVER={self.server};DATABASE={dbName};UID={self.username};PWD={self.password}"
+        connectionString = f"DRIVER={self.driver};SERVER={self.server};DATABASE={dbName};UID={self.username};PWD={self.password};trusted_connection={self.trustedConnection};"
 
         repository = repository(connectionString)
 

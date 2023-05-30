@@ -12,7 +12,7 @@ class Repository:
         self.salesDataFrame = pd.read_sql("SELECT * FROM Sales", engine)
 
     def getProductDataFrame(self):
-        sales = utils.addGuidsUnique(self.salesDataFrame, 'Product', 'prod_id')
+        sales = utils.addIntIDUnique(self.salesDataFrame, 'Product', 'prod_id')
 
         columns = ['Product', 'Product_Category', 'Sub_Category', 'Unit_Cost']
         newFrames = utils.splitFrames(sales, 'prod_id', columns)
@@ -25,16 +25,18 @@ class Repository:
         return productData
 
     def getCustomerDataFrame(self):
-        self.salesDataFrame = utils.addGuids(self.salesDataFrame, 'CUSTOMER_id')
-        newFrames = utils.splitFrames(self.salesDataFrame, 'CUSTOMER_id', ['Country', 'State'])
+        # self.salesDataFrame = utils.addIntID(self.salesDataFrame, 'CUSTOMER_id')
+        # newFrames = utils.splitFrames(self.salesDataFrame, 'CUSTOMER_id', ['Country', 'State'])
+        #
+        # self.salesDataFrame = newFrames[0]
+        # customerData = newFrames[1]
+        #
+        # newColumnNames = ['CUSTOMER_id', 'CUSTOMER_country', 'CUSTOMER_state']
+        # customerData.columns = newColumnNames
+        #
+        # return customerData
 
-        self.salesDataFrame = newFrames[0]
-        customerData = newFrames[1]
-
-        newColumnNames = ['CUSTOMER_id', 'CUSTOMER_country', 'CUSTOMER_state']
-        customerData.columns = newColumnNames
-
-        return customerData
+        return pd.DataFrame()
 
     def getEmployeeDataFrame(self):
         return pd.DataFrame()
@@ -52,10 +54,13 @@ class Repository:
 
     # Sales doesn't have a header ID or for Detail
     def getOrderDetailsDataFrame(self):
-        selectedColumn = ['Order_Quantity', 'Unit_Price', 'Date', 'CUSTOMER_id', 'prod_id']
+        # selectedColumn = ['Order_Quantity', 'Unit_Price', 'Date', 'CUSTOMER_id', 'prod_id']
+        selectedColumn = ['Order_Quantity', 'Unit_Price', 'Date', 'prod_id']
         orderDetailsData = self.salesDataFrame[selectedColumn]
 
-        renameColumns = ['ORDER_DETAIL_order_quantity', 'ORDER_DETAIL_unit_price', 'DAY_date', 'CUSTOMER_id',
+        # renameColumns = ['ORDER_DETAIL_order_quantity', 'ORDER_DETAIL_unit_price', 'DAY_date', 'CUSTOMER_id', 'PRODUCT_id']
+
+        renameColumns = ['ORDER_DETAIL_order_quantity', 'ORDER_DETAIL_unit_price', 'DAY_date',
                          'PRODUCT_id']
         orderDetailsData.columns = renameColumns
 
