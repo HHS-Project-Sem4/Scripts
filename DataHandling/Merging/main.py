@@ -7,8 +7,7 @@ import pandas as pd
 import Tools.utils as utils
 
 server = 'outdoorfusionserver.database.windows.net'
-username = 'floep'
-password = 'ploep123!'
+
 driver = '{ODBC Driver 17 for SQL Server}'
 dataService = data(server, username, password, driver)
 
