@@ -1,13 +1,10 @@
 import pandas as pd
 from Tools import utils
-from sqlalchemy import create_engine
-from sqlalchemy.engine import URL
+from Repositories.Repository import Repository
 
-class Repository:
+class AdventureRepository(Repository):
     def __init__(self, connectionString):
-        connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connectionString})
-        self.engine = create_engine(connection_url)
-
+        super(AdventureRepository, self).__init__(connectionString)
 
     def getProductDataFrame(self):
         productJoinQuery = """

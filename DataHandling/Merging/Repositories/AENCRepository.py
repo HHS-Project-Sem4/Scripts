@@ -1,12 +1,11 @@
 import pandas as pd
 from Tools import utils
-from sqlalchemy import create_engine
-from sqlalchemy.engine import URL
+from Repositories.Repository import Repository
 
-class Repository:
+
+class AENCRepository(Repository):
     def __init__(self, connectionString):
-        connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connectionString})
-        self.engine = create_engine(connection_url)
+        super(AENCRepository, self).__init__(connectionString)
 
     def getProductDataFrame(self):
         productJoinQuery = """
@@ -60,13 +59,14 @@ class Repository:
 
     def getOrderDetailsDataFrame(self):
         orderDetailsQuery = """
-        SELECT soi.id, soi.line_id , so.cust_id, so.order_date, so.sales_rep, soi.prod_id, p.unit_price, soi.quantity
+        SELECT null AS OrderDetailID, soi.line_id , so.cust_id, so.order_date, so.sales_rep, soi.prod_id, p.unit_price, soi.quantity
         FROM sales_order_item soi
         JOIN sales_order so ON soi.id = so.id
         JOIN product p ON soi.prod_id = p.id
         """
 
         orderDetailsData = pd.read_sql(orderDetailsQuery, self.engine)
+        orderDetailsData = utils.addIntID(orderDetailsData, 'OrderDetailID')
 
         renameColumns = ['ORDER_DETAIL_id', 'ORDER_HEADER_id', 'CUSTOMER_id', 'DAY_date', 'EMPLOYEE_id', 'PRODUCT_id',
                          'ORDER_DETAIL_unit_price', 'ORDER_DETAIL_order_quantity']

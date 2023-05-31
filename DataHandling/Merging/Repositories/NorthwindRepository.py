@@ -1,12 +1,10 @@
 import pandas as pd
 from Tools import utils
-from sqlalchemy import create_engine
-from sqlalchemy.engine import URL
+from Repositories.Repository import Repository
+class NorthwindRepository(Repository):
 
-class Repository:
     def __init__(self, connectionString):
-        connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connectionString})
-        self.engine = create_engine(connection_url)
+        super(NorthwindRepository, self).__init__(connectionString)
 
     # can add a category on top as food/drinks etc?
     def getProductDataFrame(self):
@@ -58,15 +56,15 @@ class Repository:
 
         return DAY_date
 
-
     def getOrderDetailsDataFrame(self):
         orderDetailsQuery = """
-        SELECT od.OrderID AS OrderDetailID, o.OrderID AS OrderHeaderID ,Quantity, UnitPrice, OrderDate, EmployeeID, CustomerID, ProductID
+        SELECT null AS OrderID ,o.OrderID AS OrderHeaderID ,Quantity, UnitPrice, OrderDate, EmployeeID, CustomerID, ProductID
         FROM [order details] od
         JOIN orders o ON od.OrderID = o.OrderID
         """
 
         orderDetailsData = pd.read_sql(orderDetailsQuery, self.engine)
+        orderDetailsData = utils.addIntID(orderDetailsData, 'OrderID')
 
         renameColumns = ['ORDER_DETAIL_id',
                          'ORDER_HEADER_id', 'ORDER_DETAIL_order_quantity', 'ORDER_DETAIL_unit_price', 'DAY_date',
@@ -74,3 +72,5 @@ class Repository:
         orderDetailsData.columns = renameColumns
 
         return orderDetailsData
+
+

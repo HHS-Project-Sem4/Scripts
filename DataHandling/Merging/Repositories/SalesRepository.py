@@ -1,15 +1,12 @@
 import pandas as pd
 from Tools import utils
-from sqlalchemy import create_engine
-from sqlalchemy.engine import URL
+from Repositories.Repository import Repository
 
-
-class Repository:
+class SalesRepository(Repository):
     def __init__(self, connectionString):
-        connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connectionString})
-        engine = create_engine(connection_url)
+        super(SalesRepository, self).__init__(connectionString)
 
-        self.salesDataFrame = pd.read_sql("SELECT * FROM Sales", engine)
+        self.salesDataFrame = pd.read_sql("SELECT null AS OrderID, * FROM Sales", self.engine)
 
     def getProductDataFrame(self):
         sales = utils.addIntIDUnique(self.salesDataFrame, 'Product', 'prod_id')
@@ -55,12 +52,14 @@ class Repository:
     # Sales doesn't have a header ID or for Detail
     def getOrderDetailsDataFrame(self):
         # selectedColumn = ['Order_Quantity', 'Unit_Price', 'Date', 'CUSTOMER_id', 'prod_id']
-        selectedColumn = ['Order_Quantity', 'Unit_Price', 'Date', 'prod_id']
+        selectedColumn = ['OrderID', 'Order_Quantity', 'Unit_Price', 'Date', 'prod_id']
+
         orderDetailsData = self.salesDataFrame[selectedColumn]
+        orderDetailsData = utils.addIntID(orderDetailsData, 'OrderID')
 
         # renameColumns = ['ORDER_DETAIL_order_quantity', 'ORDER_DETAIL_unit_price', 'DAY_date', 'CUSTOMER_id', 'PRODUCT_id']
 
-        renameColumns = ['ORDER_DETAIL_order_quantity', 'ORDER_DETAIL_unit_price', 'DAY_date',
+        renameColumns = ['ORDER_DETAIL_id', 'ORDER_DETAIL_order_quantity', 'ORDER_DETAIL_unit_price', 'DAY_date',
                          'PRODUCT_id']
         orderDetailsData.columns = renameColumns
 

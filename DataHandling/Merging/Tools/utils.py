@@ -1,4 +1,3 @@
-import uuid
 import pandas as pd
 
 
@@ -37,17 +36,6 @@ def addIntIDUnique(sourceFrame, sourceColumn, idColumnName):
 
     return originalFrame
 
-
-# adds UUID to every row in a new column
-def addUuids(sourceFrame, idColumnName):
-    originalFrame = sourceFrame.copy()
-
-    uuid_list = [str(uuid.uuid4()) for _ in range(len(originalFrame))]
-    originalFrame[idColumnName] = uuid_list
-
-    return originalFrame
-
-
 def addIntID(sourceFrame, idColumnName):
     originalFrame = sourceFrame.copy()
 
@@ -75,114 +63,84 @@ def splitFrames(sourceFrame, idColumnName, childColumns):
     return [originalFrame, splitFrame]
 
 
-# makes sure that the added frames in the added stardiagram that have a table with a column that fits the idRegex
-# get an int ID value that's not in the same ID column as the factFrame of the base stardiagram
-def mergeDiagrams(baseStarDiagram, addedStarDiagram, factFrameName, idRegex):
+def mergeStarDiagrams(baseStarDiagram, addedStarDiagram, factFrameName, factFramePrimaryKey, idRegex):
     resultFrame = baseStarDiagram.copy()
 
-    for table in addedStarDiagram:
-        if table != factFrameName:
-            for column in addedStarDiagram[table].columns:
-                if idRegex in column:
-                    createUniqueIDS(baseStarDiagram, addedStarDiagram, table, column, factFrameName)
+    baseFactFrame = next((df for df in resultFrame if df.name == factFrameName), None)
+    addedFactFrame = next((df for df in addedStarDiagram if df.name == factFrameName), None)
 
-        resultFrame[table] = pd.concat([resultFrame[table], addedStarDiagram[table]])
+    for baseTable, addTable in zip(baseStarDiagram, addedStarDiagram):
+
+        tableName = addTable.name
+
+        if addTable.name != factFrameName:
+            for column in addTable.columns:
+                if idRegex in column:
+                    createUniqueIDS(baseFactFrame, addedFactFrame, addTable, column)
+        else:
+            for column in addTable.columns:
+                if column == factFramePrimaryKey:
+
+                    createUniqueIDS2(baseFactFrame, addTable, column)
+
+        baseTable = pd.concat([baseTable, addTable])
+        baseTable.name = tableName
+
+        resultFrame = [baseTable if df.name == tableName else df for df in resultFrame]
 
     return resultFrame
 
-
-def createUniqueIDS(frame1, frame2, table, column, factFrameName):
+# Creates a set of new ids for an ID column that is not linked to something, uses range to compare it to the frame it gets added to
+def createUniqueIDS2(baseFactFrame, frameToFix, column):
     newIDValue = 0
 
-    if not (pd.isna(frame1[factFrameName][column].max())):
-        newIDValue = frame1[factFrameName][column].max()
-        newIDValue += 1000
+    if not (pd.isna(baseFactFrame[column].max())):
+        newIDValue = baseFactFrame[column].max()
+        newIDValue += 5000
 
-    for index, value in frame2[table][column].items():
-        condition1 = frame2[factFrameName][column] == value
-        frame2[factFrameName].loc[condition1, column] = newIDValue
+    id_list = range(newIDValue, (newIDValue + len(frameToFix)))
+    frameToFix[column] = id_list
 
-        condition1 = frame2[table][column] == value
-        frame2[table].loc[condition1, column] = newIDValue
+# Creates new IDS and links to the factframe
+def createUniqueIDS(baseFactFrame, addedFactFrame, frameToFix, column):
+    newIDValue = 0
+
+    if not (pd.isna(baseFactFrame[column].max())):
+        newIDValue = baseFactFrame[column].max()
+        newIDValue += 5000
+
+    for index, value in frameToFix[column].items():
+        condition1 = addedFactFrame[column] == value
+        addedFactFrame.loc[condition1, column] = newIDValue
+
+        condition1 = frameToFix[column] == value
+        frameToFix.loc[condition1, column] = newIDValue
 
         newIDValue += 1
 
+
 def dupC(df):
     for table in df:
-        print(f'CURRENT TABLE: {table}')
-        for column in df[table]:
+        for column in table:
             if '_id' in column:
-                duplicate_count = df[table][column].duplicated().sum()
+                duplicate_count = table[column].duplicated().sum()
                 print(f'COLUMN: {column} HAS {duplicate_count} OF DUPLICATED VALUES')
 
 
 def createEmptyStarFrame():
-    productColumns = ['PRODUCT_id',
-                      'PRODUCT_name',
-                      'PRODUCT_category',
-                      'PRODUCT_sub_category',
-                      'PRODUCT_colour',
-                      'PRODUCT_prod_cost',
-                      'PRODUCT_storage_quantity']
-    product_df = pd.DataFrame(columns=productColumns)
+    column_data = [
+        {'name': 'Product', 'columns': ['PRODUCT_id', 'PRODUCT_name', 'PRODUCT_category', 'PRODUCT_sub_category', 'PRODUCT_colour', 'PRODUCT_prod_cost', 'PRODUCT_storage_quantity'], 'dtype': {'PRODUCT_id': 'Int32'}},
+        {'name': 'Customer', 'columns': ['CUSTOMER_id', 'CUSTOMER_address', 'CUSTOMER_city', 'CUSTOMER_state', 'CUSTOMER_region', 'CUSTOMER_country', 'CUSTOMER_company_name'], 'dtype': {'CUSTOMER_id': 'Int32'}},
+        {'name': 'Employee', 'columns': ['EMPLOYEE_id', 'EMPLOYEE_first_name', 'EMPLOYEE_last_name', 'EMPLOYEE_city', 'EMPLOYEE_state', 'EMPLOYEE_region', 'EMPLOYEE_country'], 'dtype': {'EMPLOYEE_id': 'Int32'}},
+        {'name': 'Order_Date', 'columns': ['DAY_date', 'DAY_MONTH_nr', 'DAY_QUARTER_nr', 'DAY_YEAR_nr'], 'dtype': {'DAY_date': 'datetime64[ns]', 'DAY_MONTH_nr': 'Int8', 'DAY_QUARTER_nr': 'Int8', 'DAY_YEAR_nr': 'Int16'}},
+        {'name': 'Order_Details', 'columns': ['ORDER_DETAIL_id', 'ORDER_HEADER_id', 'ORDER_DETAIL_order_quantity', 'ORDER_DETAIL_unit_price', 'DAY_date', 'EMPLOYEE_id', 'CUSTOMER_id', 'PRODUCT_id'], 'dtype': {'ORDER_DETAIL_id': 'Int32', 'ORDER_HEADER_id': 'Int32', 'DAY_date': 'datetime64[ns]', 'EMPLOYEE_id': 'Int32', 'CUSTOMER_id': 'Int32', 'PRODUCT_id': 'Int32'}}
+    ]
 
-    product_df = product_df.astype({'PRODUCT_id': 'Int32'})
-
-    customerColumns = ['CUSTOMER_id',
-                       'CUSTOMER_address',
-                       'CUSTOMER_city',
-                       'CUSTOMER_state',
-                       'CUSTOMER_region',
-                       'CUSTOMER_country',
-                       'CUSTOMER_company_name']
-    customer_df = pd.DataFrame(columns=customerColumns)
-
-    customer_df = customer_df.astype({'CUSTOMER_id': 'Int32'})
-
-    employeeColumns = ['EMPLOYEE_id',
-                       'EMPLOYEE_first_name',
-                       'EMPLOYEE_last_name',
-                       'EMPLOYEE_city',
-                       'EMPLOYEE_state',
-                       'EMPLOYEE_region',
-                       'EMPLOYEE_country']
-    employee_df = pd.DataFrame(columns=employeeColumns)
-
-    employee_df = employee_df.astype({'EMPLOYEE_id': 'Int32'})
-
-    dayColumns = ['DAY_date',
-                  'DAY_MONTH_nr',
-                  'DAY_QUARTER_nr',
-                  'DAY_YEAR_nr']
-    day_df = pd.DataFrame(columns=dayColumns)
-
-    day_df = day_df.astype({'DAY_date': 'datetime64[ns]',
-                            'DAY_MONTH_nr': 'Int8',
-                            'DAY_QUARTER_nr': 'Int8',
-                            'DAY_YEAR_nr': 'Int16'})
-
-    orderDetailsColumns = ['ORDER_DETAIL_id',
-                           'ORDER_HEADER_id',
-                           'ORDER_DETAIL_order_quantity',
-                           'ORDER_DETAIL_unit_price',
-                           'DAY_date',
-                           'EMPLOYEE_id',
-                           'CUSTOMER_id',
-                           'PRODUCT_id']
-    order_details_df = pd.DataFrame(columns=orderDetailsColumns)
-
-    order_details_df = order_details_df.astype({'ORDER_DETAIL_id': 'Int32',
-                                                'ORDER_HEADER_id': 'Int32',
-                                                'DAY_date': 'datetime64[ns]',
-                                                'EMPLOYEE_id': 'Int32',
-                                                'CUSTOMER_id': 'Int32',
-                                                'PRODUCT_id': 'Int32'
-                                                })
-
-    data = {'product_df': product_df,
-            'customer_df': customer_df,
-            'employee_df': employee_df,
-            'day_df': day_df,
-            'order_details_df': order_details_df}
+    data = []
+    for item in column_data:
+        df = pd.DataFrame(columns=item['columns']).astype(item['dtype'])
+        df.name = item['name']
+        data.append(df)
 
     return data
+
