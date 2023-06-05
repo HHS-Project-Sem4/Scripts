@@ -25,6 +25,7 @@ X = merged_df[['ORDER_DETAIL_order_quantity', 'ORDER_DETAIL_unit_price', 'year',
 print(X.shape)                    
 
 X[:, 0] = X[:, 0].astype(int)
+X[:, 1] = X[:, 1].astype(float)
 X[:, 2] = X[:, 2].astype(int)
 
 X = X.reshape((X.shape[0], 1, X.shape[1]))
